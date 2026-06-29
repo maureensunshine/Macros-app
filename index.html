@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1A1D1E">
+<title>Macros</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1A1D1E; color: #F0EDE6; height: 100%; overscroll-behavior: none; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; padding: 16px; padding-bottom: 24px; }
+  input, button { font-family: inherit; }
+  input:focus, button:focus-visible { outline: 2px solid #E8A24B; outline-offset: 2px; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #3A3D3E; border-radius: 3px; }
+  .mono { font-family: "Roboto Mono", ui-monospace, monospace; }
+  .navbtn { background: #22262B; border: 1px solid #2E3236; color: #F0EDE6; border-radius: 8px; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .navbtn:disabled { opacity: 0.3; }
+  .card { background: #22262B; border-radius: 16px; padding: 18px 16px; margin-bottom: 16px; border: 1px solid #2E3236; }
+  .bar-track { height: 6px; background: #2A2D2E; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+  .logrow { background: #22262B; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #2E3236; margin-bottom: 6px; }
+  .addbtn { background: #E8A24B; color: #1A1D1E; border: none; border-radius: 12px; padding: 14px 0; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: auto; width: 100%; }
+  .field-input { background: #2A2D2E; border: 1px solid #3A3D3E; border-radius: 8px; color: #F0EDE6; font-size: 14px; padding: 8px 10px; height: 36px; width: 100%; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
+  .modal { background: #1F2226; border-radius: 16px 16px 0 0; padding: 18px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; border: 1px solid #2E3236; border-bottom: none; }
+  .foodrow { background: #22262B; border: 1px solid #2E3236; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; width: 100%; margin-bottom: 6px; text-align: left; color: inherit; }
+  .newfoodbtn { background: none; border: 1px dashed #3A3D3E; border-radius: 10px; color: #E8A24B; padding: 10px 12px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-bottom: 12px; }
+  .primarybtn { background: #E8A24B; color: #1A1D1E; border: none; border-radius: 10px; padding: 12px 0; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .chip { border: 1px solid #3A3D3E; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 500; cursor: pointer; background: #2A2D2E; color: #F0EDE6; }
+  .chip.active { background: #E8A24B; color: #1A1D1E; border-color: #E8A24B; }
+  .iconbtn { background: none; border: none; color: #6B655C; cursor: pointer; padding: 4px; display: flex; align-items: center; }
+  .label-sm { font-size: 12px; color: #6B655C; margin-bottom: 5px; }
+  .empty-state { text-align: center; padding: 32px 16px; color: #6B655C; font-size: 13px; }
+  .error-banner { background: #3A1F1B; color: #F0A898; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="app.js"></script>
+</body>
+</html>
