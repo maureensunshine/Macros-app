@@ -49,6 +49,7 @@ const state = {
   log: [],
   showAddFood: false,
   showNewFood: false,
+  showConverter: false,
   selectedFood: null,
   searchQuery: '',
   editingGoals: false,
@@ -137,6 +138,7 @@ const ICONS = {
   beef: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 6.5c0 2-1 3.5-2.5 5l-7 7c-1 1-2.5 1-3.5 0-1-1-1-2.5 0-3.5l7-7c1.5-1.5 3-2.5 5-2.5z"/><circle cx="17" cy="7" r="3"/></svg>',
   wheat: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-9"/><path d="M9 11c0-3 1.5-5 3-7 1.5 2 3 4 3 7"/><path d="M7 15c0-2 1-3.5 2-5"/><path d="M17 15c0-2-1-3.5-2-5"/></svg>',
   droplet: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69s-5 5.5-5 9.5a5 5 0 0 0 10 0c0-4-5-9.5-5-9.5z"/></svg>',
+  convert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
 };
 
 // ---------- Render ----------
@@ -249,7 +251,12 @@ function render() {
   }
   html += `</div>`;
 
-  html += `<button class="addbtn" id="open-log-food">${ICONS.plus} Log food</button>`;
+  html += `<div style="display:flex;gap:10px;margin-top:auto;">
+    <button class="addbtn" id="open-log-food" style="flex:1;">${ICONS.plus} Log food</button>
+    <button class="addbtn" id="open-converter" style="flex:0 0 auto;padding:14px 16px;background:#2A2D2E;color:#E8A24B;border:1px solid #3A3D3E;">
+      ${ICONS.convert} Convert
+    </button>
+  </div>`;
 
   app.innerHTML = html;
   attachMainListeners();
@@ -261,6 +268,7 @@ function attachMainListeners() {
   document.getElementById('prev-date')?.addEventListener('click', () => changeDate(-1));
   document.getElementById('next-date')?.addEventListener('click', () => changeDate(1));
   document.getElementById('open-log-food')?.addEventListener('click', () => { state.showAddFood = true; state.searchQuery = ''; render(); });
+  document.getElementById('open-converter')?.addEventListener('click', () => { state.showConverter = true; render(); });
 
   document.getElementById('toggle-edit-goals')?.addEventListener('click', () => {
     if (state.editingGoals) {
@@ -341,6 +349,10 @@ function renderModals() {
     searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
   }
 
+  if (state.showConverter) {
+    renderConverterModal();
+  }
+
   if (state.showNewFood) {
     renderNewFoodModal();
   }
@@ -352,6 +364,9 @@ function renderModals() {
 
 function renderNewFoodModal() {
   const app = document.getElementById('app');
+  const pre = state._prefillFood || {};
+  if (state._prefillFood) state._prefillFood = null;
+
   const modal = el(`
     <div class="overlay" id="newfood-overlay">
       <div class="modal">
@@ -360,13 +375,13 @@ function renderNewFoodModal() {
           <button class="iconbtn" id="close-newfood">${ICONS.x}</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px;">
-          <div><div class="label-sm">Food name</div><input id="nf-name" class="field-input" placeholder="e.g. Jennie-O turkey, cooked"></div>
-          <div><div class="label-sm">Serving size</div><input id="nf-serving" class="field-input" placeholder="e.g. 4oz cooked"></div>
+          <div><div class="label-sm">Food name</div><input id="nf-name" class="field-input" placeholder="e.g. Jennie-O turkey, cooked" value="${escapeHTML(pre.name || '')}"></div>
+          <div><div class="label-sm">Serving size</div><input id="nf-serving" class="field-input" placeholder="e.g. 4oz cooked" value="${escapeHTML(pre.servingLabel || '')}"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div><div class="label-sm">Calories</div><input id="nf-cal" type="number" class="field-input"></div>
-            <div><div class="label-sm">Protein (g)</div><input id="nf-protein" type="number" class="field-input"></div>
-            <div><div class="label-sm">Carbs (g)</div><input id="nf-carbs" type="number" class="field-input"></div>
-            <div><div class="label-sm">Fat (g)</div><input id="nf-fat" type="number" class="field-input"></div>
+            <div><div class="label-sm">Calories</div><input id="nf-cal" type="number" class="field-input" value="${pre.cal != null ? pre.cal : ''}"></div>
+            <div><div class="label-sm">Protein (g)</div><input id="nf-protein" type="number" class="field-input" value="${pre.protein != null ? pre.protein : ''}"></div>
+            <div><div class="label-sm">Carbs (g)</div><input id="nf-carbs" type="number" class="field-input" value="${pre.carbs != null ? pre.carbs : ''}"></div>
+            <div><div class="label-sm">Fat (g)</div><input id="nf-fat" type="number" class="field-input" value="${pre.fat != null ? pre.fat : ''}"></div>
           </div>
           <div id="nf-error" style="font-size:12px;color:#C75D4D;display:none;">Fill in every field before saving.</div>
           <button class="primarybtn" id="nf-save">Save food</button>
@@ -497,6 +512,124 @@ function renderLogQuantityModal() {
       state.selectedFood = null;
       render();
     });
+  });
+}
+
+function renderConverterModal() {
+  const app = document.getElementById('app');
+  // Default loss ratio: 25% weight lost when cooking (raw → cooked multiplier = 1/0.75)
+  const RATIO = 1 / 0.75;
+
+  const modal = el(`
+    <div class="overlay" id="converter-overlay">
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h2 style="font-size:17px;color:#F0EDE6;font-weight:600;">Raw → Cooked</h2>
+          <button class="iconbtn" id="close-converter">${ICONS.x}</button>
+        </div>
+        <div style="font-size:12px;color:#6B655C;margin-bottom:16px;">
+          Enter the raw label numbers. Get cooked numbers back. Math handled — you're welcome.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div><div class="label-sm">Raw serving size</div>
+            <select id="cv-serving" class="field-input" style="width:100%;cursor:pointer;">
+              <option value="112">4 oz (112g)</option>
+              <option value="85">3 oz (85g)</option>
+              <option value="100">100g</option>
+              <option value="140">5 oz (140g)</option>
+              <option value="custom">Custom (g)</option>
+            </select>
+          </div>
+          <div id="cv-custom-wrap" style="display:none;">
+            <div class="label-sm">Custom grams</div>
+            <input id="cv-custom-g" type="number" class="field-input" style="width:100%;" placeholder="g">
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:#6B655C;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Raw label values (per serving above)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div><div class="label-sm">Calories</div><input id="cv-cal" type="number" class="field-input" style="width:100%;" placeholder="e.g. 120"></div>
+          <div><div class="label-sm">Protein (g)</div><input id="cv-protein" type="number" class="field-input" style="width:100%;" placeholder="e.g. 28"></div>
+          <div><div class="label-sm">Carbs (g)</div><input id="cv-carbs" type="number" class="field-input" style="width:100%;" placeholder="e.g. 0"></div>
+          <div><div class="label-sm">Fat (g)</div><input id="cv-fat" type="number" class="field-input" style="width:100%;" placeholder="e.g. 1"></div>
+        </div>
+
+        <button class="primarybtn" id="cv-calc" style="margin-bottom:14px;">${ICONS.convert} Convert</button>
+
+        <div id="cv-result" style="display:none;">
+          <div style="font-size:12px;color:#6B655C;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Cooked values (per 4oz cooked)</div>
+          <div style="background:#22262B;border-radius:10px;padding:14px;margin-bottom:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <div style="font-size:11px;color:#6B655C;">Calories</div>
+                <div class="mono" id="cv-out-cal" style="font-size:20px;color:#E8A24B;font-weight:600;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6B655C;">Protein</div>
+                <div class="mono" id="cv-out-protein" style="font-size:20px;color:#E8A24B;font-weight:600;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6B655C;">Carbs</div>
+                <div class="mono" id="cv-out-carbs" style="font-size:18px;color:#F0EDE6;font-weight:500;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6B655C;">Fat</div>
+                <div class="mono" id="cv-out-fat" style="font-size:18px;color:#F0EDE6;font-weight:500;"></div>
+              </div>
+            </div>
+          </div>
+          <button class="primarybtn" id="cv-use-these">Use these → Create food entry</button>
+        </div>
+      </div>
+    </div>
+  `);
+  app.appendChild(modal);
+
+  const close = () => { state.showConverter = false; render(); };
+  modal.querySelector('#close-converter').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // Show/hide custom gram input
+  modal.querySelector('#cv-serving').addEventListener('change', (e) => {
+    modal.querySelector('#cv-custom-wrap').style.display = e.target.value === 'custom' ? 'block' : 'none';
+  });
+
+  let cookedVals = null;
+
+  modal.querySelector('#cv-calc').addEventListener('click', () => {
+    const servingEl = modal.querySelector('#cv-serving');
+    const rawG = servingEl.value === 'custom'
+      ? Number(modal.querySelector('#cv-custom-g').value) || 112
+      : Number(servingEl.value);
+
+    const rawCal = Number(modal.querySelector('#cv-cal').value) || 0;
+    const rawProtein = Number(modal.querySelector('#cv-protein').value) || 0;
+    const rawCarbs = Number(modal.querySelector('#cv-carbs').value) || 0;
+    const rawFat = Number(modal.querySelector('#cv-fat').value) || 0;
+
+    // Nutrients stay the same; weight drops ~25%, so per same weight cooked = raw ÷ 0.75
+    cookedVals = {
+      cal: round(rawCal * RATIO),
+      protein: round(rawProtein * RATIO, 1),
+      carbs: round(rawCarbs * RATIO, 1),
+      fat: round(rawFat * RATIO, 1),
+      servingLabel: '4oz cooked',
+    };
+
+    modal.querySelector('#cv-out-cal').textContent = cookedVals.cal + ' cal';
+    modal.querySelector('#cv-out-protein').textContent = cookedVals.protein + 'g';
+    modal.querySelector('#cv-out-carbs').textContent = cookedVals.carbs + 'g';
+    modal.querySelector('#cv-out-fat').textContent = cookedVals.fat + 'g';
+    modal.querySelector('#cv-result').style.display = 'block';
+  });
+
+  modal.querySelector('#cv-use-these')?.addEventListener('click', () => {
+    if (!cookedVals) return;
+    state.showConverter = false;
+    state.showNewFood = true;
+    state._prefillFood = cookedVals;
+    render();
   });
 }
 
