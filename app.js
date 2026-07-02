@@ -50,6 +50,7 @@ const state = {
   showAddFood: false,
   showNewFood: false,
   showConverter: false,
+  showBackup: false,
   selectedFood: null,
   searchQuery: '',
   editingGoals: false,
@@ -139,6 +140,7 @@ const ICONS = {
   wheat: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-9"/><path d="M9 11c0-3 1.5-5 3-7 1.5 2 3 4 3 7"/><path d="M7 15c0-2 1-3.5 2-5"/><path d="M17 15c0-2-1-3.5-2-5"/></svg>',
   droplet: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69s-5 5.5-5 9.5a5 5 0 0 0 10 0c0-4-5-9.5-5-9.5z"/></svg>',
   convert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+  backup: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
 };
 
 // ---------- Render ----------
@@ -256,6 +258,9 @@ function render() {
     <button class="addbtn" id="open-converter" style="flex:0 0 auto;padding:14px 16px;background:#2A2D2E;color:#E8A24B;border:1px solid #3A3D3E;">
       ${ICONS.convert} Convert
     </button>
+    <button class="addbtn" id="open-backup" style="flex:0 0 auto;padding:14px 16px;background:#2A2D2E;color:#6B8F71;border:1px solid #3A3D3E;" title="Backup & Restore">
+      ${ICONS.backup}
+    </button>
   </div>`;
 
   app.innerHTML = html;
@@ -269,6 +274,7 @@ function attachMainListeners() {
   document.getElementById('next-date')?.addEventListener('click', () => changeDate(1));
   document.getElementById('open-log-food')?.addEventListener('click', () => { state.showAddFood = true; state.searchQuery = ''; render(); });
   document.getElementById('open-converter')?.addEventListener('click', () => { state.showConverter = true; render(); });
+  document.getElementById('open-backup')?.addEventListener('click', () => { state.showBackup = true; render(); });
 
   document.getElementById('toggle-edit-goals')?.addEventListener('click', () => {
     if (state.editingGoals) {
@@ -351,6 +357,10 @@ function renderModals() {
 
   if (state.showConverter) {
     renderConverterModal();
+  }
+
+  if (state.showBackup) {
+    renderBackupModal();
   }
 
   if (state.showNewFood) {
@@ -630,6 +640,104 @@ function renderConverterModal() {
     state.showNewFood = true;
     state._prefillFood = cookedVals;
     render();
+  });
+}
+
+function renderBackupModal() {
+  const app = document.getElementById('app');
+  const foodCount = state.foods.length;
+
+  const modal = el(`
+    <div class="overlay" id="backup-overlay">
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h2 style="font-size:17px;color:#F0EDE6;font-weight:600;">Backup & Restore</h2>
+          <button class="iconbtn" id="close-backup">${ICONS.x}</button>
+        </div>
+        <div style="font-size:12px;color:#6B655C;margin-bottom:20px;">
+          Do this before every app update. Future you will be grateful. Past you already isn't.
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+          <div style="background:#22262B;border-radius:10px;padding:14px;">
+            <div style="font-size:14px;color:#F0EDE6;font-weight:600;margin-bottom:4px;">Export</div>
+            <div style="font-size:12px;color:#6B655C;margin-bottom:12px;">
+              Downloads a backup file with all your foods and goals. ${foodCount} food${foodCount !== 1 ? 's' : ''} currently saved.
+            </div>
+            <button class="primarybtn" id="do-export">${ICONS.backup} Download backup file</button>
+          </div>
+
+          <div style="background:#22262B;border-radius:10px;padding:14px;">
+            <div style="font-size:14px;color:#F0EDE6;font-weight:600;margin-bottom:4px;">Import</div>
+            <div style="font-size:12px;color:#6B655C;margin-bottom:12px;">
+              Restore from a backup file. Merges with existing foods — won't delete anything already here.
+            </div>
+            <label style="display:block;background:#E8A24B;color:#1A1D1E;border:none;border-radius:10px;padding:12px 0;font-size:14px;font-weight:600;cursor:pointer;width:100%;text-align:center;">
+              ${ICONS.backup} Choose backup file
+              <input type="file" id="do-import" accept=".json" style="display:none;">
+            </label>
+            <div id="import-result" style="font-size:12px;margin-top:8px;display:none;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+  app.appendChild(modal);
+
+  const close = () => { state.showBackup = false; render(); };
+  modal.querySelector('#close-backup').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // Export
+  modal.querySelector('#do-export').addEventListener('click', () => {
+    const backup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      foods: state.foods,
+      goals: state.goals,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `macros-backup-${todayKey()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Import
+  modal.querySelector('#do-import').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data.foods || !Array.isArray(data.foods)) throw new Error('Invalid backup file');
+
+        // Merge: add foods from backup that don't already exist (match by name)
+        const existingNames = new Set(state.foods.map(f => f.name.toLowerCase()));
+        const newFoods = data.foods.filter(f => !existingNames.has(f.name.toLowerCase()));
+        state.foods = [...state.foods, ...newFoods];
+        persistFoods();
+
+        if (data.goals) {
+          state.goals = data.goals;
+          persistGoals();
+        }
+
+        const resultEl = modal.querySelector('#import-result');
+        resultEl.style.display = 'block';
+        resultEl.style.color = '#6B8F71';
+        resultEl.textContent = `Done — ${newFoods.length} food${newFoods.length !== 1 ? 's' : ''} restored${data.goals ? ', goals restored' : ''}.${newFoods.length < data.foods.length ? ` (${data.foods.length - newFoods.length} skipped, already existed)` : ''}`;
+      } catch (err) {
+        const resultEl = modal.querySelector('#import-result');
+        resultEl.style.display = 'block';
+        resultEl.style.color = '#C75D4D';
+        resultEl.textContent = 'That file doesn\'t look right. Use a backup exported from this app.';
+      }
+    };
+    reader.readAsText(file);
   });
 }
 
