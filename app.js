@@ -49,14 +49,18 @@ const state = {
   log: [],
   showAddFood: false,
   showNewFood: false,
+  showEditFood: false,
   showConverter: false,
   showBackup: false,
   selectedFood: null,
+  editingFoodId: null,
   searchQuery: '',
   editingGoals: false,
   tempGoals: null,
   error: null,
 };
+// Sort existing foods alphabetically on load
+state.foods = state.foods.slice().sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
 function loadLogForCurrentDate() {
   state.log = loadJSON(STORE.logKey(todayKey(state.currentDate)), []);
@@ -66,6 +70,10 @@ loadLogForCurrentDate();
 function persistFoods() { if (!saveJSON(STORE.FOODS, state.foods)) state.error = 'Could not save food. Try again.'; }
 function persistGoals() { if (!saveJSON(STORE.GOALS, state.goals)) state.error = 'Could not save goals. Try again.'; }
 function persistLog() { if (!saveJSON(STORE.logKey(todayKey(state.currentDate)), state.log)) state.error = 'Could not save log entry. Try again.'; }
+
+function sortFoods(list) {
+  return list.slice().sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+}
 
 function addFood(food) {
   const newFood = {
@@ -77,9 +85,22 @@ function addFood(food) {
     carbs: round(food.carbs, 1),
     fat: round(food.fat, 1),
   };
-  state.foods = [newFood, ...state.foods];
+  state.foods = sortFoods([newFood, ...state.foods]);
   persistFoods();
   return newFood;
+}
+
+function editFood(id, updates) {
+  state.foods = sortFoods(state.foods.map(f => f.id === id ? {
+    ...f,
+    name: updates.name,
+    servingLabel: updates.servingLabel,
+    cal: round(updates.cal, 1),
+    protein: round(updates.protein, 1),
+    carbs: round(updates.carbs, 1),
+    fat: round(updates.fat, 1),
+  } : f));
+  persistFoods();
 }
 
 function deleteFood(id) {
@@ -253,15 +274,18 @@ function render() {
   }
   html += `</div>`;
 
-  html += `<div style="display:flex;gap:10px;margin-top:auto;">
-    <button class="addbtn" id="open-log-food" style="flex:1;">${ICONS.plus} Log food</button>
-    <button class="addbtn" id="open-converter" style="flex:0 0 auto;padding:14px 16px;background:#2A2D2E;color:#E8A24B;border:1px solid #3A3D3E;">
-      ${ICONS.convert} Convert
-    </button>
-    <button class="addbtn" id="open-backup" style="flex:0 0 auto;padding:14px 16px;background:#2A2D2E;color:#6B8F71;border:1px solid #3A3D3E;" title="Backup & Restore">
-      ${ICONS.backup}
-    </button>
-  </div>`;
+  html += `
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;">
+      <button class="addbtn" id="open-log-food">${ICONS.plus} Log food</button>
+      <div style="display:flex;gap:8px;">
+        <button class="addbtn" id="open-converter" style="flex:1;background:#2A2D2E;color:#E8A24B;border:1px solid #3A3D3E;font-size:13px;padding:10px 0;">
+          ${ICONS.convert} Convert
+        </button>
+        <button class="addbtn" id="open-backup" style="flex:1;background:#2A2D2E;color:#6B8F71;border:1px solid #3A3D3E;font-size:13px;padding:10px 0;">
+          ${ICONS.backup} Backup
+        </button>
+      </div>
+    </div>`;
 
   app.innerHTML = html;
   attachMainListeners();
@@ -329,17 +353,27 @@ function renderModals() {
     } else {
       filtered.forEach(food => {
         const row = el(`
-          <button class="foodrow" data-food-id="${food.id}">
-            <div>
+          <div class="foodrow" style="cursor:default;">
+            <div style="flex:1;min-width:0;cursor:pointer;" class="food-select-area">
               <div style="font-size:14px;color:#F0EDE6;font-weight:500;">${escapeHTML(food.name)}</div>
               <div style="font-size:12px;color:#6B655C;">${escapeHTML(food.servingLabel)} · ${round(food.cal)} cal</div>
             </div>
-            <span style="color:#6B655C;">${ICONS.chevron}</span>
-          </button>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="iconbtn food-edit-btn" data-id="${food.id}" style="color:#6B655C;padding:6px;">${ICONS.edit}</button>
+              <span style="color:#6B655C;pointer-events:none;">${ICONS.chevron}</span>
+            </div>
+          </div>
         `);
-        row.addEventListener('click', () => {
+        row.querySelector('.food-select-area').addEventListener('click', () => {
           state.showAddFood = false;
           state.selectedFood = food;
+          render();
+        });
+        row.querySelector('.food-edit-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.showAddFood = false;
+          state.editingFoodId = food.id;
+          state.showEditFood = true;
           render();
         });
         listEl.appendChild(row);
@@ -365,6 +399,10 @@ function renderModals() {
 
   if (state.showNewFood) {
     renderNewFoodModal();
+  }
+
+  if (state.showEditFood && state.editingFoodId) {
+    renderEditFoodModal();
   }
 
   if (state.selectedFood && !state.showNewFood) {
@@ -739,6 +777,69 @@ function renderBackupModal() {
     };
     reader.readAsText(file);
   });
+}
+
+function renderEditFoodModal() {
+  const app = document.getElementById('app');
+  const food = state.foods.find(f => f.id === state.editingFoodId);
+  if (!food) { state.showEditFood = false; render(); return; }
+
+  const modal = el(`
+    <div class="overlay" id="editfood-overlay">
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h2 style="font-size:17px;color:#F0EDE6;font-weight:600;">Edit food</h2>
+          <button class="iconbtn" id="close-editfood">${ICONS.x}</button>
+        </div>
+        <div style="font-size:12px;color:#6B655C;margin-bottom:16px;">Fix the name, fix the macros, fix whatever past-you got wrong.</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div><div class="label-sm">Food name</div><input id="ef-name" class="field-input" value="${escapeHTML(food.name)}"></div>
+          <div><div class="label-sm">Serving size</div><input id="ef-serving" class="field-input" value="${escapeHTML(food.servingLabel)}"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><div class="label-sm">Calories</div><input id="ef-cal" type="number" class="field-input" value="${food.cal}"></div>
+            <div><div class="label-sm">Protein (g)</div><input id="ef-protein" type="number" class="field-input" value="${food.protein}"></div>
+            <div><div class="label-sm">Carbs (g)</div><input id="ef-carbs" type="number" class="field-input" value="${food.carbs}"></div>
+            <div><div class="label-sm">Fat (g)</div><input id="ef-fat" type="number" class="field-input" value="${food.fat}"></div>
+          </div>
+          <div id="ef-error" style="font-size:12px;color:#C75D4D;display:none;">Every field needs a value.</div>
+          <button class="primarybtn" id="ef-save">${ICONS.check} Save changes</button>
+          <button id="ef-delete" style="background:none;border:none;color:#C75D4D;font-size:12px;cursor:pointer;width:100%;text-align:center;margin-top:2px;">Delete this food</button>
+        </div>
+      </div>
+    </div>
+  `);
+  app.appendChild(modal);
+
+  const close = () => { state.showEditFood = false; state.editingFoodId = null; render(); };
+  modal.querySelector('#close-editfood').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  modal.querySelector('#ef-save').addEventListener('click', () => {
+    const name = modal.querySelector('#ef-name').value.trim();
+    const servingLabel = modal.querySelector('#ef-serving').value.trim();
+    const cal = modal.querySelector('#ef-cal').value;
+    const protein = modal.querySelector('#ef-protein').value;
+    const carbs = modal.querySelector('#ef-carbs').value;
+    const fat = modal.querySelector('#ef-fat').value;
+    const valid = name && servingLabel && cal !== '' && protein !== '' && carbs !== '' && fat !== '';
+    if (!valid) { modal.querySelector('#ef-error').style.display = 'block'; return; }
+    editFood(food.id, { name, servingLabel, cal: Number(cal), protein: Number(protein), carbs: Number(carbs), fat: Number(fat) });
+    state.showEditFood = false;
+    state.editingFoodId = null;
+    render();
+  });
+
+  modal.querySelector('#ef-delete').addEventListener('click', () => {
+    if (confirm(`Delete "${food.name}"? This can't be undone.`)) {
+      deleteFood(food.id);
+      state.showEditFood = false;
+      state.editingFoodId = null;
+      render();
+    }
+  });
+
+  modal.querySelector('#ef-name').focus();
+  modal.querySelector('#ef-name').setSelectionRange(food.name.length, food.name.length);
 }
 
 // Initial render
