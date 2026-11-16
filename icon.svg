@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="glow" cx="62%" cy="58%" r="70%">
+      <stop offset="0" stop-color="#3a2418"/>
+      <stop offset="0.55" stop-color="#1d1718"/>
+      <stop offset="1" stop-color="#141416"/>
+    </radialGradient>
+    <linearGradient id="sunset" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#c2507a"/>
+      <stop offset="0.5" stop-color="#e0703f"/>
+      <stop offset="1" stop-color="#f6b553"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="1" stop-color="#e8873a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="512" height="512" fill="url(#glow)"/>
+
+  <g transform="translate(256 262) scale(0.78) translate(-264 -250)">
+  <!-- horizon line the mountains sit on -->
+  <path d="M86 372 H426" stroke="#7fae8e" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+
+  <!-- the M: two desert peaks in one stroke -->
+  <path d="M104 366 L156 150 L222 300 L290 126 L318 366"
+        fill="none" stroke="url(#sunset)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the o: a sun setting on the horizon -->
+  <g transform="translate(386 318)">
+    <g stroke="#f6b553" stroke-width="7" stroke-linecap="round" opacity="0.9">
+      <line x1="0" y1="-62" x2="0" y2="-80"/>
+      <line x1="44" y1="-44" x2="56" y2="-56"/>
+      <line x1="62" y1="0" x2="78" y2="0"/>
+    </g>
+    <circle r="40" fill="none" stroke="url(#sun)" stroke-width="20"/>
+  </g>
+
+  <!-- magik sparkle -->
+  <path d="M392 150 Q396 176 420 180 Q396 184 392 210 Q388 184 364 180 Q388 176 392 150 Z" fill="#f6e3b0"/>
+  <path d="M352 112 Q354 122 364 124 Q354 126 352 136 Q350 126 340 124 Q350 122 352 112 Z" fill="#f6e3b0" opacity="0.7"/>
+  </g>
+</svg>

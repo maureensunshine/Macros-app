@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#141416">
+<title>Mo's Dash</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#141416; --card:#1d1d20; --card2:#222226; --line:#2c2c30;
+    --text:#f0efe9; --sub:#9a9a96; --accent:#d8843c; --accent2:#7fae8e;
+    --danger:#d8615b; --mono: 'SF Mono', 'Consolas', monospace;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    overscroll-behavior-y:none; user-select:none;}
+  body{padding:14px 14px 40px; max-width:520px; margin:0 auto;}
+  h1{font-size:20px; font-weight:600; margin:6px 2px 14px; display:flex; justify-content:space-between; align-items:baseline;}
+  h1 span{font-size:11px; color:var(--sub); font-weight:400;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px;}
+  .card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; cursor:pointer;}
+  .card-title{font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--sub);}
+  .chev{color:var(--sub); font-size:12px; transition:transform .15s;}
+  .chev.open{transform:rotate(90deg);}
+  .body{overflow:hidden; max-height:0; transition:max-height .2s ease;}
+  .body.open{max-height:900px;}
+
+  /* CLOCK */
+  .primary-time{font-size:46px; font-weight:300; font-variant-numeric:tabular-nums; letter-spacing:-1px;}
+  .primary-date{color:var(--sub); font-size:13px; margin-top:2px;}
+  .tz-row{display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid var(--line); font-size:14px;}
+  .tz-row .name{color:var(--sub);}
+  .tz-row .time{font-variant-numeric:tabular-nums;}
+  .conv-table{width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;}
+  .conv-table th{color:var(--sub); font-weight:500; text-align:left; padding:4px 6px; border-bottom:1px solid var(--line);}
+  .conv-table td{padding:4px 6px; font-variant-numeric:tabular-nums; border-bottom:1px solid var(--line);}
+
+  /* WEATHER */
+  .wx-now{display:flex; align-items:center; gap:14px;}
+  .wx-temp{font-size:42px; font-weight:300;}
+  .wx-loc{font-size:13px; color:var(--sub);}
+  .wx-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;}
+  .wx-stat{background:var(--card2); border-radius:10px; padding:8px 10px;}
+  .wx-stat .label{font-size:10px; color:var(--sub); text-transform:uppercase; letter-spacing:.05em;}
+  .wx-stat .val{font-size:16px; margin-top:2px;}
+
+  /* CALC */
+  .calc-screen{background:var(--card2); border-radius:10px; padding:14px; text-align:right; font-size:30px; font-variant-numeric:tabular-nums; margin-bottom:8px; min-height:42px; overflow-x:auto; white-space:nowrap;}
+  .calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .calc-btn{background:var(--card2); border:none; border-radius:10px; padding:14px 0; font-size:18px; color:var(--text); cursor:pointer;}
+  .calc-btn:active{background:var(--line);}
+  .calc-btn.op{color:var(--accent);}
+  .calc-btn.eq{background:var(--accent); color:#1a1a1a; font-weight:600;}
+  .calc-btn.clear{color:var(--danger);}
+
+  /* CONVERSION */
+  .conv-tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .conv-tab{background:var(--card2); border:none; border-radius:8px; padding:6px 10px; color:var(--sub); font-size:12px; cursor:pointer;}
+  .conv-tab.active{background:var(--accent); color:#1a1a1a; font-weight:600;}
+  .conv-input-row{display:flex; gap:8px; margin-bottom:12px;}
+  .conv-input-row input{flex:1; background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:9px 10px; color:var(--text); font-size:15px;}
+  .conv-input-row select{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:9px 8px; color:var(--text); font-size:13px;}
+  .conv-result-row{display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-top:1px solid var(--line);}
+  .conv-result-row:first-child{border-top:none;}
+  .conv-result-label{color:var(--sub); font-size:12px;}
+  .conv-result-val{font-size:15px; font-variant-numeric:tabular-nums; font-weight:500;}
+  .conv-result-row.highlight .conv-result-val{color:var(--accent);}
+
+
+  .cal-nav{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .cal-nav button{background:var(--card2); border:none; color:var(--text); border-radius:8px; padding:6px 12px; font-size:14px;}
+  .cal-month{font-size:14px; font-weight:600;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; text-align:center;}
+  .cal-dow{font-size:10px; color:var(--sub); padding:4px 0;}
+  .cal-day{aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:8px; font-size:13px; background:var(--card2); cursor:pointer; position:relative;}
+  .cal-day.empty{background:transparent;}
+  .cal-day.today{outline:1.5px solid var(--accent);}
+  .cal-day.has-event::after{content:''; width:4px; height:4px; border-radius:50%; background:var(--accent2); position:absolute; bottom:4px;}
+  .event-list{margin-top:12px;}
+  .event-item{display:flex; justify-content:space-between; align-items:center; background:var(--card2); border-radius:10px; padding:9px 12px; margin-bottom:6px; font-size:13px;}
+  .event-item .et{color:var(--sub); font-size:11px; margin-top:2px;}
+  .event-item button{background:none; border:none; color:var(--danger); font-size:13px;}
+  .add-event{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+  .add-event input{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:9px 10px; color:var(--text); font-size:14px;}
+  .add-event button{background:var(--accent); border:none; border-radius:8px; padding:10px; color:#1a1a1a; font-weight:600; font-size:14px;}
+
+  /* STOCKS */
+  .stock-row{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-top:1px solid var(--line);}
+  .stock-row:first-child{border-top:none;}
+  .stock-sym{font-weight:600; font-size:14px;}
+  .stock-price{font-variant-numeric:tabular-nums; text-align:right;}
+  .stock-chg{font-size:12px;}
+  .up{color:var(--accent2);} .down{color:var(--danger);}
+  .stock-add{display:flex; gap:8px; margin-top:10px;}
+  .stock-add input{flex:1; background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; color:var(--text); text-transform:uppercase; font-size:13px;}
+  .stock-add button{background:var(--accent2); border:none; border-radius:8px; padding:0 14px; color:#1a1a1a; font-weight:600;}
+  .rm{background:none; border:none; color:var(--sub); font-size:14px; margin-left:8px;}
+  .refresh-note{font-size:10px; color:var(--sub); margin-top:8px;}
+
+  .glance{font-size:12px; color:var(--sub); margin-top:-6px; margin-bottom:14px;}
+
+  /* ---------- additions ---------- */
+  .body.open{max-height:6000px;}
+  h1 .brand{display:flex; align-items:center; gap:8px;}
+  h1 .brand img{width:26px; height:26px; border-radius:7px;}
+  .btn{background:var(--card2); border:1px solid var(--line); border-radius:9px; padding:10px 12px; color:var(--text); font-size:13px; cursor:pointer; font-family:inherit;}
+  .btn:active{background:var(--line);}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#1a1a1a; font-weight:600;}
+  .btn.ghost{background:none; color:var(--sub);}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .btn-row .btn{flex:1;}
+  .field{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:9px 10px; color:var(--text); font-size:14px; width:100%; font-family:inherit;}
+  .label-sm{font-size:11px; color:var(--sub); margin-bottom:4px;}
+  .section-label{font-size:10px; color:var(--sub); text-transform:uppercase; letter-spacing:.08em; margin:14px 0 2px;}
+  .hint{font-size:11px; color:var(--sub); margin-top:6px; line-height:1.45;}
+  input,select,textarea{user-select:text;}
+
+  /* time zones */
+  .tz-row .zsub{font-size:11px; color:var(--sub); opacity:.8;}
+  .tz-row .x{background:none; border:none; color:var(--sub); font-size:14px; margin-left:8px; padding:0 2px;}
+  .tz-table-wrap{overflow-x:auto; margin-top:10px; -webkit-overflow-scrolling:touch;}
+  .conv-table{min-width:460px;}
+  .conv-table td:first-child,.conv-table th:first-child{color:var(--accent);}
+  .city-find{display:flex; gap:8px; margin-top:6px;}
+  .city-find input{flex:1;}
+  .city-result{background:var(--card2); border-radius:10px; padding:10px 12px; margin-top:8px;}
+  .city-result .ct{font-size:22px; font-weight:300; font-variant-numeric:tabular-nums;}
+  .city-result .cn{font-size:13px;}
+  .city-result .cz{font-size:11px; color:var(--sub); margin-top:2px;}
+  .city-result-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+
+  /* raw -> cooked */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .cooked-out{background:var(--card2); border-radius:10px; padding:12px; margin-top:12px;}
+  .cooked-out .big{font-size:20px; font-weight:600; color:var(--accent); font-variant-numeric:tabular-nums;}
+  .cooked-out .med{font-size:17px; font-variant-numeric:tabular-nums;}
+
+  /* label check */
+  .lc-verdict{border-radius:12px; padding:14px; margin-top:12px; border:1px solid var(--line);}
+  .lc-verdict .v-big{font-size:26px; font-weight:700; letter-spacing:-.5px;}
+  .lc-verdict .v-sub{font-size:12px; color:var(--sub); margin-top:2px;}
+  .lc-verdict.bad{background:rgba(216,97,91,.12); border-color:rgba(216,97,91,.45);}
+  .lc-verdict.bad .v-big{color:var(--danger);}
+  .lc-verdict.warn{background:rgba(216,132,60,.10); border-color:rgba(216,132,60,.45);}
+  .lc-verdict.warn .v-big{color:var(--accent);}
+  .lc-verdict.good{background:rgba(127,174,142,.10); border-color:rgba(127,174,142,.45);}
+  .lc-verdict.good .v-big{color:var(--accent2);}
+  .lc-line{display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--line); font-size:13px;}
+  .lc-line:first-of-type{border-top:none;}
+  .lc-dot{width:9px; height:9px; border-radius:50%; margin-top:4px; flex:0 0 auto; background:var(--sub);}
+  .lc-dot.bad{background:var(--danger);} .lc-dot.warn{background:var(--accent);} .lc-dot.good{background:var(--accent2);} .lc-dot.meh{background:var(--sub);}
+  .lc-hit b{font-weight:600;}
+  .lc-hit .found{color:var(--sub); font-size:12px;}
+  .lc-quote{font-size:12px; color:var(--sub); font-style:italic; margin-top:3px;}
+  .lc-raw{font-size:12px; color:var(--sub); background:var(--bg); border-radius:8px; padding:10px; margin-top:8px; white-space:pre-wrap; max-height:220px; overflow:auto; user-select:text;}
+  .lc-product{font-size:14px; font-weight:600; margin-top:12px;}
+  .lc-product span{display:block; font-size:12px; color:var(--sub); font-weight:400;}
+  .lc-progress{height:4px; background:var(--card2); border-radius:3px; overflow:hidden; margin-top:10px;}
+  .lc-progress div{height:100%; width:0; background:var(--accent); transition:width .2s;}
+  .lc-thumb{max-width:100%; max-height:160px; border-radius:8px; margin-top:10px; display:block;}
+  .list-editor{width:100%; min-height:300px; font-family:var(--mono); font-size:11px; line-height:1.5; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px;}
+  details summary{cursor:pointer; color:var(--sub); font-size:12px; margin-top:10px;}
+
+  /* barcode scanner overlay */
+  .scan-overlay{position:fixed; inset:0; background:#000; z-index:100; display:none; flex-direction:column; align-items:center; justify-content:center;}
+  .scan-overlay.open{display:flex;}
+  .scan-overlay video{width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
+  .scan-frame{position:relative; width:78%; max-width:360px; aspect-ratio:1.8; border:2px solid var(--accent); border-radius:14px; box-shadow:0 0 0 2000px rgba(0,0,0,.45);}
+  .scan-msg{position:relative; color:#fff; margin-top:18px; font-size:14px; text-align:center; padding:0 20px;}
+  .scan-cancel{position:absolute; bottom:36px; left:50%; transform:translateX(-50%); background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.3); border-radius:999px; padding:12px 28px; font-size:15px;}
+
+  .footer{display:flex; gap:8px; margin-top:6px;}
+  .footer .btn{flex:1; font-size:12px; color:var(--sub);}
+</style>
+</head>
+<body>
+<h1><span class="brand"><img src="icon-192.png" alt="">Mo's Dash</span> <span id="header-clock"></span></h1>
+
+<!-- CLOCK CARD (the big one) -->
+<div class="card">
+  <div class="primary-time" id="mst-time">--:--:--</div>
+  <div class="primary-date" id="mst-date">MST &middot; Arizona</div>
+</div>
+
+<!-- WEATHER CARD -->
+<div class="card">
+  <div class="card-head" onclick="toggle('wx')">
+    <div class="card-title">Weather</div>
+    <div class="chev open" id="chev-wx">&#8250;</div>
+  </div>
+  <div class="wx-now">
+    <div class="wx-temp" id="wx-temp">--&deg;</div>
+    <div>
+      <div id="wx-desc">Loading...</div>
+      <div class="wx-loc" id="wx-loc">Locating...</div>
+    </div>
+  </div>
+  <div class="body open" id="body-wx">
+    <div class="wx-grid">
+      <div class="wx-stat"><div class="label">High</div><div class="val" id="wx-hi">--&deg;</div></div>
+      <div class="wx-stat"><div class="label">Low</div><div class="val" id="wx-lo">--&deg;</div></div>
+      <div class="wx-stat"><div class="label">Wind</div><div class="val" id="wx-wind">--</div></div>
+      <div class="wx-stat"><div class="label">Humidity</div><div class="val" id="wx-hum">--</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- STOCKS CARD -->
+<div class="card">
+  <div class="card-head" onclick="toggle('stocks')">
+    <div class="card-title">Stocks</div>
+    <div class="chev open" id="chev-stocks">&#8250;</div>
+  </div>
+  <div id="stock-list">Loading...</div>
+  <div class="body open" id="body-stocks">
+    <div class="stock-add">
+      <input id="new-ticker" placeholder="e.g. AAPL" maxlength="6">
+      <button onclick="addTicker()">Add</button>
+    </div>
+    <div class="refresh-note">Free API tier: 25 lookups/day. Prices cache ~15 min. <span id="refresh-btn" style="text-decoration:underline; cursor:pointer;" onclick="forceRefresh()">Force refresh</span></div>
+  </div>
+</div>
+
+<!-- LABEL CHECK CARD -->
+<div class="card" id="card-label">
+  <div class="card-head" onclick="toggle('label')">
+    <div class="card-title">Label Check</div>
+    <div class="chev" id="chev-label">&#8250;</div>
+  </div>
+  <div class="glance" id="lc-glance">Scan it before it scams you.</div>
+  <div class="body" id="body-label">
+    <div class="btn-row">
+      <button class="btn primary" onclick="startBarcodeScan()">Scan barcode</button>
+      <button class="btn primary" onclick="document.getElementById('lc-photo').click()">Photo of label</button>
+    </div>
+    <input type="file" id="lc-photo" accept="image/*" style="display:none" onchange="onLabelPhoto(this)">
+    <div class="city-find">
+      <input class="field" id="lc-code" inputmode="numeric" placeholder="...or type the barcode number">
+      <button class="btn" onclick="lookupTyped()">Look up</button>
+    </div>
+    <div id="lc-status"></div>
+    <div id="lc-result"></div>
+
+    <div class="section-label">Your avoid list</div>
+    <div class="hint" id="lc-list-summary">Loading list...</div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn" onclick="toggleListEditor()">Edit</button>
+      <button class="btn" onclick="document.getElementById('lc-import').click()">Import .txt</button>
+      <button class="btn" onclick="exportList()">Export .txt</button>
+    </div>
+    <input type="file" id="lc-import" accept=".txt,text/plain" style="display:none" onchange="importList(this)">
+    <div id="lc-editor" style="display:none; margin-top:10px;">
+      <textarea class="list-editor" id="lc-editor-text" spellcheck="false"></textarea>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn primary" onclick="saveListFromEditor()">Save list</button>
+        <button class="btn" onclick="toggleListEditor()">Cancel</button>
+        <button class="btn ghost" onclick="resetList()">Reset to starter</button>
+      </div>
+    </div>
+    <div class="hint">Barcode lookups use Open Food Facts, a free crowd-built database. It's good, not gospel. Photos are read on your phone, nothing gets uploaded.</div>
+  </div>
+</div>
+
+<!-- RAW TO COOKED CARD -->
+<div class="card">
+  <div class="card-head" onclick="toggle('cook')">
+    <div class="card-title">Raw &rarr; Cooked</div>
+    <div class="chev" id="chev-cook">&#8250;</div>
+  </div>
+  <div class="body" id="body-cook">
+    <div class="hint" style="margin:0 0 10px;">Raw label numbers in, cooked numbers out. Same math as the macros app.</div>
+    <div class="grid2">
+      <div><div class="label-sm">Raw serving size</div>
+        <select class="field" id="rc-serving" onchange="runRawCooked()">
+          <option value="112">4 oz (112g)</option>
+          <option value="85">3 oz (85g)</option>
+          <option value="100">100g</option>
+          <option value="140">5 oz (140g)</option>
+          <option value="custom">Custom (g)</option>
+        </select>
+      </div>
+      <div id="rc-custom-wrap" style="visibility:hidden;"><div class="label-sm">Custom grams</div>
+        <input class="field" id="rc-custom" type="number" inputmode="decimal" placeholder="g" oninput="runRawCooked()">
+      </div>
+    </div>
+    <div class="section-label">Raw label values (per serving above)</div>
+    <div class="grid2" style="margin-top:6px;">
+      <div><div class="label-sm">Calories</div><input class="field" id="rc-cal" type="number" inputmode="decimal" placeholder="e.g. 120" oninput="runRawCooked()"></div>
+      <div><div class="label-sm">Protein (g)</div><input class="field" id="rc-pro" type="number" inputmode="decimal" placeholder="e.g. 28" oninput="runRawCooked()"></div>
+      <div><div class="label-sm">Carbs (g)</div><input class="field" id="rc-carb" type="number" inputmode="decimal" placeholder="e.g. 0" oninput="runRawCooked()"></div>
+      <div><div class="label-sm">Fat (g)</div><input class="field" id="rc-fat" type="number" inputmode="decimal" placeholder="e.g. 1" oninput="runRawCooked()"></div>
+    </div>
+    <div style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+      <div class="label-sm" style="margin:0;">Weight lost in cooking</div>
+      <input class="field" id="rc-loss" type="number" inputmode="decimal" value="25" style="width:64px;" oninput="runRawCooked()"><span class="label-sm" style="margin:0;">%</span>
+    </div>
+    <div id="rc-out"></div>
+  </div>
+</div>
+
+<!-- CONVERSION CARD -->
+<div class="card">
+  <div class="card-head" onclick="toggle('conv')">
+    <div class="card-title">Unit Conversion</div>
+    <div class="chev" id="chev-conv">&#8250;</div>
+  </div>
+  <div class="body" id="body-conv">
+    <div class="conv-tabs" id="conv-tabs">
+      <button class="conv-tab active" onclick="setConvCat('weight')">Weight</button>
+      <button class="conv-tab" onclick="setConvCat('volume')">Volume</button>
+      <button class="conv-tab" onclick="setConvCat('length')">Length</button>
+      <button class="conv-tab" onclick="setConvCat('temp')">Temp</button>
+      <button class="conv-tab" onclick="setConvCat('area')">Area</button>
+      <button class="conv-tab" onclick="setConvCat('speed')">Speed</button>
+    </div>
+    <div class="conv-input-row">
+      <input type="number" id="conv-input" placeholder="Enter value" oninput="runConversion()">
+      <select id="conv-from" onchange="runConversion()"></select>
+    </div>
+    <div id="conv-results"></div>
+  </div>
+</div>
+
+<!-- CALENDAR CARD -->
+<div class="card">
+  <div class="card-head" onclick="toggle('cal')">
+    <div class="card-title">Calendar</div>
+    <div class="chev open" id="chev-cal">&#8250;</div>
+  </div>
+  <div class="glance" id="cal-glance">No events today</div>
+  <div class="body open" id="body-cal">
+    <div class="cal-nav">
+      <button onclick="shiftMonth(-1)">&lt;</button>
+      <div class="cal-month" id="cal-month-label"></div>
+      <button onclick="shiftMonth(1)">&gt;</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="event-list" id="event-list"></div>
+    <div class="add-event">
+      <input type="date" id="ev-date">
+      <input type="time" id="ev-time">
+      <input type="text" id="ev-title" placeholder="Event title">
+      <button onclick="addEvent()">Add event</button>
+    </div>
+  </div>
+</div>
+
+<!-- CALCULATOR CARD -->
+<div class="card">
+  <div class="card-head" onclick="toggle('calc')">
+    <div class="card-title">Calculator</div>
+    <div class="chev" id="chev-calc">&#8250;</div>
+  </div>
+  <div class="body" id="body-calc">
+    <div class="calc-screen" id="calc-screen">0</div>
+    <div class="calc-grid">
+      <button class="calc-btn clear" onclick="calcClear()">C</button>
+      <button class="calc-btn op" onclick="calcInput('(')">(</button>
+      <button class="calc-btn op" onclick="calcInput(')')">)</button>
+      <button class="calc-btn op" onclick="calcInput('/')">&divide;</button>
+      <button class="calc-btn" onclick="calcInput('7')">7</button>
+      <button class="calc-btn" onclick="calcInput('8')">8</button>
+      <button class="calc-btn" onclick="calcInput('9')">9</button>
+      <button class="calc-btn op" onclick="calcInput('*')">&times;</button>
+      <button class="calc-btn" onclick="calcInput('4')">4</button>
+      <button class="calc-btn" onclick="calcInput('5')">5</button>
+      <button class="calc-btn" onclick="calcInput('6')">6</button>
+      <button class="calc-btn op" onclick="calcInput('-')">&minus;</button>
+      <button class="calc-btn" onclick="calcInput('1')">1</button>
+      <button class="calc-btn" onclick="calcInput('2')">2</button>
+      <button class="calc-btn" onclick="calcInput('3')">3</button>
+      <button class="calc-btn op" onclick="calcInput('+')">+</button>
+      <button class="calc-btn" onclick="calcBack()">&larr;</button>
+      <button class="calc-btn" onclick="calcInput('0')">0</button>
+      <button class="calc-btn" onclick="calcInput('.')">.</button>
+      <button class="calc-btn eq" onclick="calcEquals()">=</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIME ZONES CARD (bottom, as ordered) -->
+<div class="card">
+  <div class="card-head" onclick="toggle('tz')">
+    <div class="card-title">Time Zones</div>
+    <div class="chev open" id="chev-tz">&#8250;</div>
+  </div>
+  <div class="body open" id="body-tz">
+    <div id="tz-us"></div>
+    <div class="section-label">Canada</div>
+    <div id="tz-canada"></div>
+    <div id="tz-pinned-wrap" style="display:none;">
+      <div class="section-label">Pinned</div>
+      <div id="tz-pinned"></div>
+    </div>
+
+    <div class="section-label">If it's this time in Arizona... (swipe for Canada + UTC)</div>
+    <div class="tz-table-wrap"><table class="conv-table" id="conv-table"></table></div>
+
+    <div class="section-label">Look up a city</div>
+    <div class="city-find">
+      <input class="field" id="city-q" placeholder="City, state/province, country" onkeydown="if(event.key==='Enter')findCity()">
+      <button class="btn primary" onclick="findCity()">Find</button>
+    </div>
+    <div id="city-results"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <button class="btn" onclick="backupData()">Back up my data</button>
+  <button class="btn" onclick="document.getElementById('restore-file').click()">Restore</button>
+</div>
+<input type="file" id="restore-file" accept=".json,application/json" style="display:none" onchange="restoreData(this)">
+
+<!-- barcode scanner overlay -->
+<div class="scan-overlay" id="scan-overlay">
+  <video id="scan-video" playsinline muted></video>
+  <div class="scan-frame"></div>
+  <div class="scan-msg" id="scan-msg">Point at the barcode</div>
+  <button class="scan-cancel" onclick="stopBarcodeScan()">Cancel</button>
+</div>
+
+<script src="matcher.js"></script>
+<script>
+/* ---------- CARD TOGGLE ---------- */
+function toggle(id){
+  document.getElementById('body-'+id).classList.toggle('open');
+  document.getElementById('chev-'+id).classList.toggle('open');
+}
+function openCard(id){
+  document.getElementById('body-'+id).classList.add('open');
+  document.getElementById('chev-'+id).classList.add('open');
+}
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+function lsGet(k, fallback){ try{ const v=localStorage.getItem(k); return v==null?fallback:JSON.parse(v); }catch(e){ return fallback; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+/* ---------- TIME ZONES ----------
+   Canada broke the clocks in 2026: BC, Alberta, Manitoba and the NWT
+   stopped falling back. Phones may still have the old rules baked in,
+   so these zones use fixed offsets instead of trusting the phone. */
+const TZ_OVERRIDES = {
+  'America/Vancouver':   {off:-7, label:'Pacific Time (BC), UTC-7 year-round'},
+  'America/Edmonton':    {off:-6, label:'Alberta Time, UTC-6 year-round'},
+  'America/Yellowknife': {off:-6, label:'NWT, UTC-6 year-round'},
+  'America/Inuvik':      {off:-6, label:'NWT, UTC-6 year-round'},
+  'America/Winnipeg':    {off:-5, label:'Manitoba, UTC-5 year-round'},
+};
+const US_ZONES = [
+  {name:'Pacific',  iana:'America/Los_Angeles'},
+  {name:'Mountain', iana:'America/Denver'},
+  {name:'Central',  iana:'America/Chicago'},
+  {name:'Eastern',  iana:'America/New_York'},
+  {name:'UTC',      iana:'UTC'},
+];
+const CANADA_ZONES = [
+  {name:'Vancouver, BC',  iana:'America/Vancouver'},
+  {name:'Edmonton, AB',   iana:'America/Edmonton'},
+];
+
+function fmtIn(iana, date, opts){
+  const o = TZ_OVERRIDES[iana];
+  if(o) return new Date(date.getTime() + o.off*3600e3).toLocaleTimeString('en-US', Object.assign({}, opts, {timeZone:'UTC'}));
+  return date.toLocaleTimeString('en-US', Object.assign({}, opts, {timeZone:iana}));
+}
+function fmtDateIn(iana, date){
+  const o = TZ_OVERRIDES[iana];
+  const opts = {weekday:'short', month:'short', day:'numeric'};
+  if(o) return new Date(date.getTime() + o.off*3600e3).toLocaleDateString('en-US', Object.assign(opts, {timeZone:'UTC'}));
+  return date.toLocaleDateString('en-US', Object.assign(opts, {timeZone:iana}));
+}
+// UTC offset in hours for a zone right now
+function offsetHours(iana, date){
+  const o = TZ_OVERRIDES[iana];
+  if(o) return o.off;
+  if(iana==='UTC') return 0;
+  try{
+    const s = date.toLocaleString('en-US', {timeZone:iana, timeZoneName:'longOffset'});
+    const m = s.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+    if(!m) return 0;
+    return (m[1]==='-'?-1:1) * (parseInt(m[2],10) + (m[3]?parseInt(m[3],10)/60:0));
+  }catch(e){ return 0; }
+}
+function zoneAbbr(iana, date){
+  if(TZ_OVERRIDES[iana]) return 'UTC'+(TZ_OVERRIDES[iana].off>=0?'+':'')+TZ_OVERRIDES[iana].off;
+  if(iana==='UTC') return '';
+  const str = date.toLocaleTimeString('en-US', {timeZone:iana, timeZoneName:'short'});
+  const m = str.match(/\b([A-Z]{2,5}|GMT[+-]\d+(?::\d\d)?)\s*$/);
+  return m ? m[1] : '';
+}
+function diffFromAZ(iana, date){
+  const d = offsetHours(iana, date) - (-7);
+  if(d===0) return 'same as you';
+  const n = Math.abs(d), u = n===1?'hr':'hrs';
+  return (d>0?'+':'-') + (Number.isInteger(n)?n:n.toFixed(1)) + ' ' + u;
+}
+function tzRow(name, iana, date, removeIdx){
+  const ab = zoneAbbr(iana, date);
+  const x = removeIdx==null ? '' : `<button class="x" onclick="unpinCity(${removeIdx})">&times;</button>`;
+  return `<div class="tz-row"><div><div class="name">${esc(name)}${ab?' ('+ab+')':''}</div><div class="zsub">${diffFromAZ(iana,date)}</div></div>`+
+    `<div style="display:flex;align-items:center;"><div class="time">${fmtIn(iana,date,{hour:'numeric',minute:'2-digit',second:'2-digit'})}</div>${x}</div></div>`;
+}
+
+let pinnedCities = lsGet('pinned-cities', []);
+let lastCityResults = [];
+
+function updateClock(){
+  const now = new Date();
+  document.getElementById('mst-time').textContent = fmtIn('America/Phoenix', now, {hour:'numeric', minute:'2-digit', second:'2-digit'});
+  document.getElementById('mst-date').textContent = 'MST · ' + now.toLocaleDateString('en-US',{timeZone:'America/Phoenix', weekday:'long', month:'short', day:'numeric'});
+  document.getElementById('header-clock').textContent = fmtIn('America/Phoenix', now, {hour:'numeric', minute:'2-digit'}) + ' MST';
+  document.getElementById('tz-us').innerHTML = US_ZONES.map(z=>tzRow(z.name, z.iana, now)).join('');
+  document.getElementById('tz-canada').innerHTML = CANADA_ZONES.map(z=>tzRow(z.name, z.iana, now)).join('');
+  document.getElementById('tz-pinned-wrap').style.display = pinnedCities.length ? '' : 'none';
+  document.getElementById('tz-pinned').innerHTML = pinnedCities.map((c,i)=>tzRow(c.name, c.iana, now, i)).join('');
+  if(lastCityResults.length) renderCityResults();
+}
+
+function buildConvTable(){
+  const cols = [
+    ['AZ','America/Phoenix'], ['PT','America/Los_Angeles'], ['MT','America/Denver'],
+    ['CT','America/Chicago'], ['ET','America/New_York'],
+    ['Van','America/Vancouver'], ['Edm','America/Edmonton'], ['UTC','UTC']
+  ];
+  // Today's date in Arizona, then build each hour as a real UTC moment (AZ = UTC-7, always)
+  const p = new Intl.DateTimeFormat('en-US',{timeZone:'America/Phoenix', year:'numeric', month:'numeric', day:'numeric'}).formatToParts(new Date());
+  const get = t => parseInt(p.find(x=>x.type===t).value,10);
+  const y=get('year'), m=get('month')-1, d=get('day');
+  let html = '<tr>' + cols.map(c=>'<th>'+c[0]+'</th>').join('') + '</tr>';
+  [6,8,9,12,15,17,18,21].forEach(h=>{
+    const moment = new Date(Date.UTC(y, m, d, h+7, 0, 0));
+    html += '<tr>' + cols.map(c=>'<td>'+fmtIn(c[1], moment, {hour:'numeric'})+'</td>').join('') + '</tr>';
+  });
+  document.getElementById('conv-table').innerHTML = html;
+}
+
+/* ---------- CITY LOOKUP (Open-Meteo geocoding, no key) ---------- */
+const REGION_ABBR = {
+  al:'alabama',ak:'alaska',az:'arizona',ar:'arkansas',ca:'california',co:'colorado',ct:'connecticut',de:'delaware',fl:'florida',ga:'georgia',
+  hi:'hawaii',id:'idaho',il:'illinois',in:'indiana',ia:'iowa',ks:'kansas',ky:'kentucky',la:'louisiana',me:'maine',md:'maryland',
+  ma:'massachusetts',mi:'michigan',mn:'minnesota',ms:'mississippi',mo:'missouri',mt:'montana',ne:'nebraska',nv:'nevada',nh:'new hampshire',
+  nj:'new jersey',nm:'new mexico',ny:'new york',nc:'north carolina',nd:'north dakota',oh:'ohio',ok:'oklahoma',or:'oregon',pa:'pennsylvania',
+  ri:'rhode island',sc:'south carolina',sd:'south dakota',tn:'tennessee',tx:'texas',ut:'utah',vt:'vermont',va:'virginia',wa:'washington',
+  wv:'west virginia',wi:'wisconsin',wy:'wyoming',dc:'district of columbia',
+  bc:'british columbia',ab:'alberta',sk:'saskatchewan',mb:'manitoba',on:'ontario',qc:'quebec',nb:'new brunswick',ns:'nova scotia',
+  pe:'prince edward island',pei:'prince edward island',nl:'newfoundland and labrador',yt:'yukon',nt:'northwest territories',nu:'nunavut',
+  usa:'united states',us:'united states',uk:'united kingdom'
+};
+function placeMatches(r, part){
+  const p = part.toLowerCase().replace(/\./g,'').trim();
+  if(!p) return true;
+  const full = REGION_ABBR[p] || p;
+  const hay = [r.admin1, r.admin2, r.country, r.country_code].filter(Boolean).map(s=>s.toLowerCase());
+  return hay.some(h => h===full || h.startsWith(full) || h===p);
+}
+async function findCity(){
+  const q = document.getElementById('city-q').value.trim();
+  const out = document.getElementById('city-results');
+  if(!q) return;
+  const parts = q.split(',').map(s=>s.trim()).filter(Boolean);
+  out.innerHTML = '<div class="hint">Looking...</div>';
+  try{
+    const res = await fetch('https://geocoding-api.open-meteo.com/v1/search?count=20&language=en&format=json&name='+encodeURIComponent(parts[0]));
+    const data = await res.json();
+    let rs = (data.results||[]).filter(r=>r.timezone);
+    const narrowed = rs.filter(r => parts.slice(1).every(p=>placeMatches(r,p)));
+    if(narrowed.length) rs = narrowed;
+    lastCityResults = rs.slice(0, parts.length>1 ? 2 : 3);
+    if(!lastCityResults.length){ out.innerHTML = '<div class="hint">Never heard of it. Check the spelling, or try just the city name.</div>'; return; }
+    renderCityResults();
+  }catch(e){
+    out.innerHTML = '<div class="hint">Lookup failed. Are you online?</div>';
+  }
+}
+function renderCityResults(){
+  const now = new Date();
+  document.getElementById('city-results').innerHTML = lastCityResults.map((r,i)=>{
+    const place = [r.name, r.admin1, r.country].filter(Boolean).join(', ');
+    const ov = TZ_OVERRIDES[r.timezone];
+    const ab = zoneAbbr(r.timezone, now);
+    return `<div class="city-result"><div class="city-result-top"><div>
+      <div class="cn">${esc(place)}</div>
+      <div class="ct">${fmtIn(r.timezone, now, {hour:'numeric', minute:'2-digit'})}</div>
+      <div class="cz">${esc(fmtDateIn(r.timezone, now))} &middot; ${esc(ab)} &middot; ${esc(diffFromAZ(r.timezone, now))}</div>
+      <div class="cz">${esc(ov ? ov.label : r.timezone)}</div>
+    </div><button class="btn" onclick="pinCity(${i})">Pin</button></div></div>`;
+  }).join('');
+}
+function pinCity(i){
+  const r = lastCityResults[i]; if(!r) return;
+  const name = r.name + (r.admin1 ? ', ' + r.admin1 : '') ;
+  if(!pinnedCities.some(c=>c.name===name && c.iana===r.timezone)) pinnedCities.push({name:name, iana:r.timezone});
+  lsSet('pinned-cities', pinnedCities);
+  lastCityResults = []; document.getElementById('city-results').innerHTML=''; document.getElementById('city-q').value='';
+  updateClock();
+}
+function unpinCity(i){ pinnedCities.splice(i,1); lsSet('pinned-cities', pinnedCities); updateClock(); }
+
+updateClock(); buildConvTable();
+setInterval(updateClock, 1000);
+setInterval(buildConvTable, 10*60*1000);
+
+/* ---------- RAW -> COOKED (same math as the macros app) ---------- */
+function rnd(n, d){ const f=Math.pow(10,d||0); return Math.round(n*f)/f; }
+function runRawCooked(){
+  const sel = document.getElementById('rc-serving').value;
+  document.getElementById('rc-custom-wrap').style.visibility = sel==='custom' ? 'visible' : 'hidden';
+  const grams = sel==='custom' ? (parseFloat(document.getElementById('rc-custom').value)||0) : parseFloat(sel);
+  const v = id => parseFloat(document.getElementById(id).value);
+  const cal=v('rc-cal'), pro=v('rc-pro'), carb=v('rc-carb'), fat=v('rc-fat');
+  let loss = v('rc-loss'); if(isNaN(loss)||loss<0||loss>=95) loss=25;
+  const out = document.getElementById('rc-out');
+  if([cal,pro,carb,fat].every(isNaN)){ out.innerHTML=''; return; }
+  const keep = 1 - loss/100;          // 25% loss -> 0.75
+  const R = 1/keep;                   // per same weight, cooked = raw / 0.75
+  const z = n => isNaN(n)?0:n;
+  const cookedG = grams*keep;
+  out.innerHTML = `<div class="cooked-out">
+    <div class="label-sm" style="text-transform:uppercase;letter-spacing:.05em;font-weight:600;">Cooked values per ${rnd(grams,1)}g cooked</div>
+    <div class="grid2" style="margin-top:6px;">
+      <div><div class="label-sm">Calories</div><div class="big">${rnd(z(cal)*R)}</div></div>
+      <div><div class="label-sm">Protein</div><div class="big">${rnd(z(pro)*R,1)}g</div></div>
+      <div><div class="label-sm">Carbs</div><div class="med">${rnd(z(carb)*R,1)}g</div></div>
+      <div><div class="label-sm">Fat</div><div class="med">${rnd(z(fat)*R,1)}g</div></div>
+    </div>
+    <div class="hint" style="margin-top:10px;">Translation: ${rnd(grams,1)}g raw cooks down to about ${rnd(cookedG,1)}g. Weigh it cooked, log it with these numbers.</div>
+  </div>`;
+}
+
+/* ---------- LABEL CHECK ---------- */
+let avoidText = lsGet('avoid-list', null);
+let avoidRules = [];
+
+async function loadAvoidList(force){
+  if(force || !avoidText){
+    try{
+      const res = await fetch('avoid-list.txt', {cache:'no-store'});
+      if(!res.ok) throw new Error('missing');
+      avoidText = await res.text();
+      lsSet('avoid-list', avoidText);
+    }catch(e){
+      if(!avoidText){ document.getElementById('lc-list-summary').textContent='Could not load the starter list. Import one.'; return; }
+    }
+  }
+  avoidRules = MoMatcher.parseList(avoidText);
+  const hard = avoidRules.filter(r=>!r.maybe).map(r=>r.name);
+  const maybe = avoidRules.filter(r=>r.maybe).length;
+  document.getElementById('lc-list-summary').textContent = hard.length
+    ? hard.join(', ') + (maybe ? ` + ${maybe} maybe rule${maybe>1?'s':''}` : '')
+    : 'Your list is empty. Bold strategy.';
+}
+function toggleListEditor(){
+  const ed = document.getElementById('lc-editor');
+  const open = ed.style.display==='none';
+  ed.style.display = open ? '' : 'none';
+  if(open) document.getElementById('lc-editor-text').value = avoidText || '';
+}
+function saveListFromEditor(){
+  avoidText = document.getElementById('lc-editor-text').value;
+  lsSet('avoid-list', avoidText);
+  document.getElementById('lc-editor').style.display='none';
+  loadAvoidList(false);
+}
+async function resetList(){
+  if(!confirm('Replace your list with the starter list? Your edits will be gone.')) return;
+  await loadAvoidList(true);
+  document.getElementById('lc-editor-text').value = avoidText || '';
+}
+function exportList(){ downloadFile('avoid-list.txt', avoidText||'', 'text/plain'); }
+function importList(input){
+  const f = input.files && input.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const t = String(reader.result||'');
+    const rules = MoMatcher.parseList(t);
+    if(!rules.length){ alert("That file has no rules in it. Format is  Name: thing, thing, thing"); return; }
+    avoidText = t; lsSet('avoid-list', t); loadAvoidList(false);
+    alert('Imported '+rules.length+' rules.');
+  };
+  reader.readAsText(f);
+  input.value='';
+}
+function downloadFile(name, content, type){
+  const blob = new Blob([content], {type:type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function lcStatus(html){ document.getElementById('lc-status').innerHTML = html||''; }
+
+function renderVerdict(r, meta){
+  let cls, big, sub;
+  if(r.hard.length){ cls='bad'; big='Nope.'; sub=r.hard.length+' thing'+(r.hard.length>1?'s':'')+' from your list'; }
+  else if(r.maybes.length){ cls='warn'; big='Hmm.'; sub='Nothing definite, but some vague stuff worth a look'; }
+  else { cls='good'; big='Looks clear.'; sub='Nothing from your list'+(meta.photo?' that I could read':''); }
+
+  let lines = '';
+  r.hard.forEach(h=>{ lines += `<div class="lc-line lc-hit"><div class="lc-dot bad"></div><div><b>${esc(h.name)}</b><div class="found">${esc(h.found.join(', '))}</div></div></div>`; });
+  r.maybes.forEach(h=>{ lines += `<div class="lc-line lc-hit"><div class="lc-dot warn"></div><div><b>${esc(h.name)}</b><div class="found">${esc(h.found.join(', '))}</div></div></div>`; });
+  lines += `<div class="lc-line"><div class="lc-dot ${r.gf.level}"></div><div><b>Gluten:</b> ${esc(r.gf.text)}</div></div>`;
+  lines += `<div class="lc-line"><div class="lc-dot ${r.facility.level}"></div><div><b>Cross-contamination:</b> ${esc(r.facility.text)}${r.warnings.map(w=>`<div class="lc-quote">"${esc(w)}"</div>`).join('')}</div></div>`;
+
+  let note = '';
+  if(meta.photo && !r.sectionFound) note = '<div class="hint">I couldn\'t find the word "Ingredients," so I checked everything I could read. Front-of-box claims like "no corn syrup" might trip it.</div>';
+  if(meta.photo) note += '<div class="hint">Photo reading isn\'t perfect. If the "what I read" text below looks like soup, retake it closer and flatter.</div>';
+
+  document.getElementById('lc-result').innerHTML =
+    (meta.product ? `<div class="lc-product">${esc(meta.product)}${meta.brand?`<span>${esc(meta.brand)}</span>`:''}</div>` : '') +
+    (meta.thumb ? `<img class="lc-thumb" src="${meta.thumb}" alt="">` : '') +
+    `<div class="lc-verdict ${cls}"><div class="v-big">${big}</div><div class="v-sub">${esc(sub)}</div></div>
+     <div style="margin-top:6px;">${lines}</div>${note}
+     <details><summary>${meta.photo?'What I read':'Ingredients'}</summary><div class="lc-raw">${esc(meta.photo ? meta.rawText : r.ingredientsText) || '(nothing)'}</div></details>`;
+  document.getElementById('lc-glance').textContent = big + ' ' + (meta.product || 'Last scan') ;
+}
+
+/* --- barcode: live camera scan --- */
+let scanStream = null, scanTimer = null, scanDetector = null;
+async function startBarcodeScan(){
+  if(!('BarcodeDetector' in window)){
+    lcStatus('<div class="hint">This browser can\'t scan barcodes. Type the number in below, or use a photo of the label.</div>');
+    return;
+  }
+  try{
+    const formats = await BarcodeDetector.getSupportedFormats();
+    const want = ['ean_13','ean_8','upc_a','upc_e'].filter(f=>formats.includes(f));
+    scanDetector = new BarcodeDetector({formats: want.length?want:undefined});
+    scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1280}}});
+  }catch(e){
+    lcStatus('<div class="hint">Couldn\'t open the camera. If Chrome asked for permission and you said no, it holds a grudge: allow camera for this site in Chrome settings.</div>');
+    return;
+  }
+  const video = document.getElementById('scan-video');
+  video.srcObject = scanStream; await video.play();
+  document.getElementById('scan-msg').textContent = 'Point at the barcode';
+  document.getElementById('scan-overlay').classList.add('open');
+  scanTimer = setInterval(async ()=>{
+    try{
+      const codes = await scanDetector.detect(video);
+      if(codes && codes.length){
+        const code = codes[0].rawValue;
+        stopBarcodeScan();
+        lookupBarcode(code);
+      }
+    }catch(e){}
+  }, 250);
+}
+function stopBarcodeScan(){
+  clearInterval(scanTimer); scanTimer=null;
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+  document.getElementById('scan-overlay').classList.remove('open');
+}
+function lookupTyped(){
+  const code = document.getElementById('lc-code').value.replace(/\D/g,'');
+  if(code.length<6){ lcStatus('<div class="hint">That\'s not a barcode, that\'s a PIN.</div>'); return; }
+  lookupBarcode(code);
+}
+function pretty(tag){ return String(tag).replace(/^[a-z]{2}:/,'').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+async function lookupBarcode(code){
+  document.getElementById('lc-result').innerHTML='';
+  lcStatus('<div class="hint">Looking up '+esc(code)+'...</div>');
+  try{
+    const fields = 'product_name,brands,ingredients_text,ingredients_text_en,allergens_tags,traces_tags,labels_tags';
+    const res = await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields='+fields);
+    const data = await res.json();
+    if(!data || data.status!==1 || !data.product){
+      lcStatus('<div class="hint">Barcode '+esc(code)+' isn\'t in the database. Snap a photo of the ingredients instead.</div><div class="btn-row" style="margin-top:8px;"><button class="btn primary" onclick="document.getElementById(\'lc-photo\').click()">Photo of label</button></div>');
+      return;
+    }
+    const p = data.product;
+    const ingr = p.ingredients_text_en || p.ingredients_text || '';
+    if(!ingr.trim()){
+      lcStatus('<div class="hint">Found <b>'+esc(p.product_name||code)+'</b>, but nobody typed in its ingredients. Photo time.</div><div class="btn-row" style="margin-top:8px;"><button class="btn primary" onclick="document.getElementById(\'lc-photo\').click()">Photo of label</button></div>');
+      return;
+    }
+    const allergens = p.allergens_tags || [];
+    const labels = p.labels_tags || [];
+    // fold the database's milk flag in too, since "dairy-free" is on the list
+    const extra = allergens.includes('en:milk') ? ' (contains milk)' : '';
+    const r = MoMatcher.analyze({
+      fromBarcode:true, text: ingr + extra,
+      gfLabel: labels.includes('en:gluten-free') || labels.includes('en:no-gluten'),
+      containsGluten: allergens.includes('en:gluten'),
+      traces: (p.traces_tags||[]).map(pretty)
+    }, avoidRules);
+    lcStatus('');
+    renderVerdict(r, {product: p.product_name || ('Barcode '+code), brand: p.brands});
+  }catch(e){
+    lcStatus('<div class="hint">Lookup failed. Are you online? Photo of the label works without the database.</div>');
+  }
+}
+
+/* --- photo: read the text on the phone (Tesseract, free) --- */
+let ocrWorker = null;
+function loadScript(src){
+  return new Promise((ok, fail)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=fail; document.head.appendChild(s); });
+}
+async function getOcrWorker(onProgress){
+  if(!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+  if(!ocrWorker){
+    ocrWorker = await Tesseract.createWorker('eng', 1, {
+      logger: m => { if(m.status==='recognizing text' && onProgress) onProgress(m.progress); }
+    });
+  }
+  return ocrWorker;
+}
+// shrink huge phone photos, go grayscale, punch up contrast: OCR likes boring
+function prepImage(file){
+  return new Promise((ok, fail)=>{
+    const img = new Image();
+    img.onload = () => {
+      const max = 2000, scale = Math.min(1, max/Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0, c.width, c.height);
+      const d = g.getImageData(0,0,c.width,c.height), px = d.data;
+      for(let i=0;i<px.length;i+=4){
+        let y = 0.299*px[i] + 0.587*px[i+1] + 0.114*px[i+2];
+        y = (y-128)*1.5 + 128; y = y<0?0:y>255?255:y;
+        px[i]=px[i+1]=px[i+2]=y;
+      }
+      g.putImageData(d,0,0);
+      ok({canvas:c, thumb:c.toDataURL('image/jpeg', 0.5)});
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = fail;
+    img.src = URL.createObjectURL(file);
+  });
+}
+async function onLabelPhoto(input){
+  const f = input.files && input.files[0]; input.value='';
+  if(!f) return;
+  document.getElementById('lc-result').innerHTML='';
+  lcStatus('<div class="hint" id="lc-ocr-msg">Reading the label... (first time loads the reader, give it a minute)</div><div class="lc-progress"><div id="lc-bar"></div></div>');
+  try{
+    const prepped = await prepImage(f);
+    const worker = await getOcrWorker(p=>{
+      const bar=document.getElementById('lc-bar'); if(bar) bar.style.width=Math.round(p*100)+'%';
+      const msg=document.getElementById('lc-ocr-msg'); if(msg) msg.textContent='Reading the label... '+Math.round(p*100)+'%';
+    });
+    const { data } = await worker.recognize(prepped.canvas);
+    const text = (data && data.text) || '';
+    lcStatus('');
+    if(text.replace(/\s/g,'').length < 15){
+      lcStatus('<div class="hint">I could barely read anything. Get closer, hold it flat, avoid glare, and try again.</div>');
+      return;
+    }
+    const r = MoMatcher.analyze({text:text}, avoidRules);
+    renderVerdict(r, {photo:true, rawText:text, thumb:prepped.thumb});
+  }catch(e){
+    lcStatus('<div class="hint">The label reader didn\'t load. You need to be online the first time so it can download.</div>');
+  }
+}
+
+/* ---------- BACKUP / RESTORE ---------- */
+const BACKUP_KEYS = ['calendar-events','stock-list','avoid-list','pinned-cities'];
+function backupData(){
+  const out = {app:"mo-dash", saved:new Date().toISOString(), data:{}};
+  BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
+  const stamp = new Date().toISOString().slice(0,10);
+  downloadFile('mo-dash-backup-'+stamp+'.json', JSON.stringify(out,null,2), 'application/json');
+}
+function restoreData(input){
+  const f = input.files && input.files[0]; input.value=''; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const j = JSON.parse(reader.result);
+      if(!j || j.app!=='mo-dash' || !j.data) throw new Error('nope');
+      if(!confirm('Restore this backup? It replaces your calendar, stocks, avoid list and pinned cities.')) return;
+      Object.keys(j.data).forEach(k=>{ if(BACKUP_KEYS.includes(k)) localStorage.setItem(k, j.data[k]); });
+      location.reload();
+    }catch(e){ alert("That's not a Mo's Dash backup file."); }
+  };
+  reader.readAsText(f);
+}
+
+loadAvoidList(false);
+
+// home-screen shortcut: /?open=label jumps straight to Label Check
+(function(){
+  const want = new URLSearchParams(location.search).get('open');
+  if(want==='label'){ openCard('label'); setTimeout(()=>document.getElementById('card-label').scrollIntoView({behavior:'smooth'}), 150); }
+})();
+
+/* ---------- WEATHER (Open-Meteo, no key needed) ---------- */
+const DEFAULT_LAT=33.4353, DEFAULT_LON=-112.3576; // Goodyear, AZ fallback
+function wmoDesc(code){
+  const map={0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Fog',
+    51:'Light drizzle',53:'Drizzle',55:'Drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',
+    71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Showers',82:'Heavy showers',
+    95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
+  return map[code]||'--';
+}
+async function loadWeather(lat,lon,locLabel){
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
+    const res=await fetch(url);
+    const data=await res.json();
+    document.getElementById('wx-temp').innerHTML=Math.round(data.current.temperature_2m)+'&deg;';
+    document.getElementById('wx-desc').textContent=wmoDesc(data.current.weather_code);
+    document.getElementById('wx-loc').textContent=locLabel;
+    document.getElementById('wx-hi').innerHTML=Math.round(data.daily.temperature_2m_max[0])+'&deg;';
+    document.getElementById('wx-lo').innerHTML=Math.round(data.daily.temperature_2m_min[0])+'&deg;';
+    document.getElementById('wx-wind').textContent=Math.round(data.current.wind_speed_10m)+' mph';
+    document.getElementById('wx-hum').textContent=Math.round(data.current.relative_humidity_2m)+'%';
+  }catch(e){
+    document.getElementById('wx-desc').textContent='Weather unavailable';
+  }
+}
+function initWeather(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>loadWeather(pos.coords.latitude, pos.coords.longitude, 'Current location'),
+      ()=>loadWeather(DEFAULT_LAT, DEFAULT_LON, 'Goodyear, AZ'),
+      {timeout:5000}
+    );
+  } else {
+    loadWeather(DEFAULT_LAT, DEFAULT_LON, 'Goodyear, AZ');
+  }
+}
+initWeather();
+setInterval(initWeather, 15*60*1000);
+
+/* ---------- UNIT CONVERSION ---------- */
+const CONV_CATS = {
+  weight: {
+    units: [
+      { key:'oz',    label:'Ounces (oz)',       toBase: v => v * 28.3495,   fromBase: v => v / 28.3495 },
+      { key:'lb',    label:'Pounds (lb)',        toBase: v => v * 453.592,   fromBase: v => v / 453.592 },
+      { key:'g',     label:'Grams (g)',          toBase: v => v,             fromBase: v => v },
+      { key:'kg',    label:'Kilograms (kg)',     toBase: v => v * 1000,      fromBase: v => v / 1000 },
+      { key:'st',    label:'Stone (st)',         toBase: v => v * 6350.29,   fromBase: v => v / 6350.29 },
+      { key:'t',     label:'Metric Ton (t)',     toBase: v => v * 1e6,       fromBase: v => v / 1e6 },
+    ]
+  },
+  volume: {
+    units: [
+      { key:'tsp',   label:'Teaspoon (tsp)',     toBase: v => v * 4.92892,   fromBase: v => v / 4.92892 },
+      { key:'tbsp',  label:'Tablespoon (tbsp)',  toBase: v => v * 14.7868,   fromBase: v => v / 14.7868 },
+      { key:'floz',  label:'Fl. Oz (fl oz)',     toBase: v => v * 29.5735,   fromBase: v => v / 29.5735 },
+      { key:'cup',   label:'Cup (US)',            toBase: v => v * 236.588,   fromBase: v => v / 236.588 },
+      { key:'pt',    label:'Pint (US pt)',        toBase: v => v * 473.176,   fromBase: v => v / 473.176 },
+      { key:'qt',    label:'Quart (US qt)',       toBase: v => v * 946.353,   fromBase: v => v / 946.353 },
+      { key:'gal',   label:'Gallon (US gal)',     toBase: v => v * 3785.41,   fromBase: v => v / 3785.41 },
+      { key:'ml',    label:'Milliliter (ml)',     toBase: v => v,             fromBase: v => v },
+      { key:'l',     label:'Liter (L)',           toBase: v => v * 1000,      fromBase: v => v / 1000 },
+    ]
+  },
+  length: {
+    units: [
+      { key:'in',    label:'Inch (in)',           toBase: v => v * 25.4,      fromBase: v => v / 25.4 },
+      { key:'ft',    label:'Foot (ft)',           toBase: v => v * 304.8,     fromBase: v => v / 304.8 },
+      { key:'yd',    label:'Yard (yd)',           toBase: v => v * 914.4,     fromBase: v => v / 914.4 },
+      { key:'mi',    label:'Mile (mi)',           toBase: v => v * 1.60934e6, fromBase: v => v / 1.60934e6 },
+      { key:'mm',    label:'Millimeter (mm)',     toBase: v => v,             fromBase: v => v },
+      { key:'cm',    label:'Centimeter (cm)',     toBase: v => v * 10,        fromBase: v => v / 10 },
+      { key:'m',     label:'Meter (m)',           toBase: v => v * 1000,      fromBase: v => v / 1000 },
+      { key:'km',    label:'Kilometer (km)',      toBase: v => v * 1e6,       fromBase: v => v / 1e6 },
+    ]
+  },
+  temp: {
+    special: true,
+    units: [
+      { key:'f',  label:'Fahrenheit (°F)', toC: v => (v-32)*5/9,   fromC: v => v*9/5+32 },
+      { key:'c',  label:'Celsius (°C)',    toC: v => v,              fromC: v => v },
+      { key:'k',  label:'Kelvin (K)',      toC: v => v-273.15,       fromC: v => v+273.15 },
+    ]
+  },
+  area: {
+    units: [
+      { key:'sqin',  label:'Sq Inch (in²)',      toBase: v => v * 645.16,    fromBase: v => v / 645.16 },
+      { key:'sqft',  label:'Sq Foot (ft²)',      toBase: v => v * 92903,     fromBase: v => v / 92903 },
+      { key:'sqyd',  label:'Sq Yard (yd²)',      toBase: v => v * 836127,    fromBase: v => v / 836127 },
+      { key:'acre',  label:'Acre',                toBase: v => v * 4.047e9,   fromBase: v => v / 4.047e9 },
+      { key:'sqmi',  label:'Sq Mile (mi²)',      toBase: v => v * 2.59e12,   fromBase: v => v / 2.59e12 },
+      { key:'sqcm',  label:'Sq Centimeter (cm²)',toBase: v => v,             fromBase: v => v },
+      { key:'sqm',   label:'Sq Meter (m²)',      toBase: v => v * 1e4,       fromBase: v => v / 1e4 },
+      { key:'ha',    label:'Hectare (ha)',        toBase: v => v * 1e8,       fromBase: v => v / 1e8 },
+      { key:'sqkm',  label:'Sq Kilometer (km²)', toBase: v => v * 1e10,      fromBase: v => v / 1e10 },
+    ]
+  },
+  speed: {
+    units: [
+      { key:'mph',   label:'Miles/hr (mph)',      toBase: v => v * 1.60934,   fromBase: v => v / 1.60934 },
+      { key:'fps',   label:'Feet/sec (fps)',      toBase: v => v * 1.09728,   fromBase: v => v / 1.09728 },
+      { key:'kph',   label:'Km/hr (kph)',         toBase: v => v,             fromBase: v => v },
+      { key:'mps',   label:'Meters/sec (m/s)',    toBase: v => v * 3.6,       fromBase: v => v / 3.6 },
+      { key:'kts',   label:'Knots (kts)',         toBase: v => v * 1.852,     fromBase: v => v / 1.852 },
+    ]
+  }
+};
+
+let convCat = 'weight';
+
+function setConvCat(cat){
+  convCat = cat;
+  document.querySelectorAll('.conv-tab').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  buildConvFrom();
+  runConversion();
+}
+
+function buildConvFrom(){
+  const sel = document.getElementById('conv-from');
+  const units = CONV_CATS[convCat].units;
+  sel.innerHTML = units.map(u => `<option value="${u.key}">${u.label}</option>`).join('');
+}
+
+function fmtNum(n){
+  if(Math.abs(n) === 0) return '0';
+  if(Math.abs(n) >= 0.001 && Math.abs(n) < 1e10){
+    // trim trailing zeros but keep up to 6 sig figs
+    return parseFloat(n.toPrecision(6)).toLocaleString('en-US', {maximumFractionDigits: 6});
+  }
+  return n.toExponential(4);
+}
+
+function runConversion(){
+  const raw = document.getElementById('conv-input').value;
+  const fromKey = document.getElementById('conv-from').value;
+  const cat = CONV_CATS[convCat];
+  const val = parseFloat(raw);
+  const resultsEl = document.getElementById('conv-results');
+
+  if(raw === '' || isNaN(val)){
+    resultsEl.innerHTML = '<div style="color:var(--sub);font-size:13px;padding:8px 0;">Enter a value above.</div>';
+    return;
+  }
+
+  let html = '';
+
+  if(cat.special){ // temperature
+    const fromUnit = cat.units.find(u => u.key === fromKey);
+    const celsius = fromUnit.toC(val);
+    cat.units.forEach(u => {
+      const result = u.fromC(celsius);
+      const isFrom = u.key === fromKey;
+      html += `<div class="conv-result-row ${isFrom?'highlight':''}">
+        <div class="conv-result-label">${u.label}</div>
+        <div class="conv-result-val">${fmtNum(result)}${isFrom?' ←':''}</div>
+      </div>`;
+    });
+  } else {
+    const fromUnit = cat.units.find(u => u.key === fromKey);
+    const base = fromUnit.toBase(val);
+    cat.units.forEach(u => {
+      const result = u.fromBase(base);
+      const isFrom = u.key === fromKey;
+      html += `<div class="conv-result-row ${isFrom?'highlight':''}">
+        <div class="conv-result-label">${u.label}</div>
+        <div class="conv-result-val">${fmtNum(result)}${isFrom?' ←':''}</div>
+      </div>`;
+    });
+  }
+
+  resultsEl.innerHTML = html;
+}
+
+// init conversion card
+buildConvFrom();
+
+/* ---------- CALCULATOR ---------- */
+let calcExpr='';
+function calcInput(v){
+  calcExpr+=v;
+  document.getElementById('calc-screen').textContent=calcExpr||'0';
+}
+function calcBack(){
+  calcExpr=calcExpr.slice(0,-1);
+  document.getElementById('calc-screen').textContent=calcExpr||'0';
+}
+function calcClear(){
+  calcExpr='';
+  document.getElementById('calc-screen').textContent='0';
+}
+function calcEquals(){
+  try{
+    if(!/^[0-9+\-*/().\s]+$/.test(calcExpr)) throw new Error('bad');
+    const result=Function('"use strict"; return ('+calcExpr+')')();
+    calcExpr=String(Math.round(result*1e8)/1e8);
+    document.getElementById('calc-screen').textContent=calcExpr;
+  }catch(e){
+    document.getElementById('calc-screen').textContent='Error';
+    calcExpr='';
+  }
+}
+
+/* ---------- CALENDAR ---------- */
+let calViewDate=new Date();
+let calEvents={};
+
+function loadEvents(){
+  try{
+    const raw=localStorage.getItem('calendar-events');
+    calEvents = raw ? JSON.parse(raw) : {};
+  }catch(e){ calEvents={}; }
+  renderCalendar();
+}
+function saveEvents(){
+  try{ localStorage.setItem('calendar-events', JSON.stringify(calEvents)); }
+  catch(e){ console.error('save failed', e); }
+}
+function dateKey(y,m,d){
+  return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+}
+function shiftMonth(n){
+  calViewDate.setMonth(calViewDate.getMonth()+n);
+  renderCalendar();
+}
+function renderCalendar(){
+  const y=calViewDate.getFullYear(), m=calViewDate.getMonth();
+  document.getElementById('cal-month-label').textContent=calViewDate.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+  const firstDow=new Date(y,m,1).getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const todayKey=dateKey(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+  let html='';
+  ['S','M','T','W','T','F','S'].forEach(d=>html+='<div class="cal-dow">'+d+'</div>');
+  for(let i=0;i<firstDow;i++) html+='<div class="cal-day empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const key=dateKey(y,m,d);
+    const has=calEvents[key] && calEvents[key].length>0;
+    const isToday=key===todayKey;
+    html+=`<div class="cal-day ${isToday?'today':''} ${has?'has-event':''}" onclick="selectDay('${key}')">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+  renderEventList(todayKey);
+  updateGlance(todayKey);
+}
+function updateGlance(todayKey){
+  const evs=calEvents[todayKey]||[];
+  document.getElementById('cal-glance').textContent = evs.length
+    ? evs.length+' event'+(evs.length>1?'s':'')+' today'
+    : 'No events today';
+}
+let selectedKey=null;
+function selectDay(key){
+  selectedKey=key;
+  document.getElementById('ev-date').value=key;
+  renderEventList(key);
+}
+function renderEventList(key){
+  const evs=(calEvents[key]||[]).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  let html=evs.map((e,i)=>`
+    <div class="event-item">
+      <div><div>${escapeHtml(e.title)}</div><div class="et">${e.time||'All day'} &middot; ${key}</div></div>
+      <button onclick="deleteEvent('${key}',${i})">&times;</button>
+    </div>`).join('');
+  document.getElementById('event-list').innerHTML = html || '<div style="color:var(--sub); font-size:13px;">No events on '+key+'</div>';
+}
+function escapeHtml(s){
+  const d=document.createElement('div'); d.textContent=s; return d.innerHTML;
+}
+async function addEvent(){
+  const date=document.getElementById('ev-date').value;
+  const time=document.getElementById('ev-time').value;
+  const title=document.getElementById('ev-title').value.trim();
+  if(!date || !title) return;
+  if(!calEvents[date]) calEvents[date]=[];
+  calEvents[date].push({title, time});
+  await saveEvents();
+  document.getElementById('ev-title').value='';
+  renderCalendar();
+  renderEventList(date);
+}
+async function deleteEvent(key, idx){
+  calEvents[key].splice(idx,1);
+  if(calEvents[key].length===0) delete calEvents[key];
+  await saveEvents();
+  renderCalendar();
+  renderEventList(key);
+}
+loadEvents();
+document.getElementById('ev-date').valueAsDate=new Date();
+
+/* ---------- STOCKS ---------- */
+let stockList=[];
+let stockCache={};
+const CACHE_MS = 15*60*1000;
+
+function loadStockState(){
+  try{
+    const l=localStorage.getItem('stock-list');
+    stockList = l ? JSON.parse(l) : ['AAPL','MSFT'];
+  }catch(e){ stockList=['AAPL','MSFT']; }
+  try{
+    const c=localStorage.getItem('stock-cache');
+    stockCache = c ? JSON.parse(c) : {};
+  }catch(e){ stockCache={}; }
+  renderStocks();
+  refreshStocks(false);
+}
+function saveStockList(){
+  try{ localStorage.setItem('stock-list', JSON.stringify(stockList)); }catch(e){}
+}
+function saveStockCache(){
+  try{ localStorage.setItem('stock-cache', JSON.stringify(stockCache)); }catch(e){}
+}
+function renderStocks(){
+  if(stockList.length===0){
+    document.getElementById('stock-list').innerHTML='<div style="color:var(--sub); font-size:13px;">No tickers added yet.</div>';
+    return;
+  }
+  let html='';
+  stockList.forEach(sym=>{
+    const q=stockCache[sym];
+    if(q){
+      const chg=parseFloat(q.change), pct=q.changePercent;
+      const cls = chg>=0 ? 'up' : 'down';
+      const arrow = chg>=0 ? '▲' : '▼';
+      html+=`<div class="stock-row">
+        <div><div class="stock-sym">${sym}</div></div>
+        <div class="stock-price">$${q.price}<div class="stock-chg ${cls}">${arrow} ${Math.abs(chg).toFixed(2)} (${pct})</div></div>
+        <button class="rm" onclick="removeTicker('${sym}')">&times;</button>
+      </div>`;
+    } else {
+      html+=`<div class="stock-row">
+        <div class="stock-sym">${sym}</div>
+        <div class="stock-price" style="color:var(--sub);">--</div>
+        <button class="rm" onclick="removeTicker('${sym}')">&times;</button>
+      </div>`;
+    }
+  });
+  document.getElementById('stock-list').innerHTML=html;
+}
+async function fetchQuote(sym){
+  const res=await fetch(`/api/quote?symbol=${encodeURIComponent(sym)}`);
+  const data=await res.json();
+  if(!data || data.error || !data.price) return null;
+  return {
+    price: data.price,
+    change: data.change,
+    changePercent: data.changePercent,
+    ts: Date.now()
+  };
+}
+async function forceRefresh(){
+  const btn=document.getElementById('refresh-btn');
+  if(btn){ btn.textContent='Refreshing...'; btn.style.opacity='0.5'; }
+  await refreshStocks(true);
+  if(btn){ btn.textContent='Force refresh'; btn.style.opacity='1'; }
+}
+async function refreshStocks(force){
+  for(const sym of stockList){
+    const cached=stockCache[sym];
+    if(!force && cached && (Date.now()-cached.ts < CACHE_MS)) continue;
+    try{
+      const q=await fetchQuote(sym);
+      if(q) stockCache[sym]=q;
+    }catch(e){ console.error('quote fail', sym, e); }
+    renderStocks();
+  }
+  saveStockCache();
+}
+async function addTicker(){
+  const input=document.getElementById('new-ticker');
+  const sym=input.value.trim().toUpperCase();
+  if(!sym || stockList.includes(sym)) return;
+  stockList.push(sym);
+  input.value='';
+  await saveStockList();
+  renderStocks();
+  refreshStocks(false);
+}
+async function removeTicker(sym){
+  stockList=stockList.filter(s=>s!==sym);
+  delete stockCache[sym];
+  await saveStockList();
+  await saveStockCache();
+  renderStocks();
+}
+loadStockState();
+</script>
+</body>
+</html>

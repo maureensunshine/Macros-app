@@ -1,0 +1,54 @@
+# ============================================================
+#  MO'S AVOID LIST
+#  Edit this, save it, import it back into Label Check.
+# ============================================================
+#
+#  HOW THIS FILE WORKS
+#  - Lines starting with # are notes. The app ignores them.
+#  - Each rule is one line:   Name: other name, other name, ...
+#  - Plurals are automatic. "onion" also catches "onions".
+#  - Capitals and dashes don't matter. "Corn-Starch" = "corn starch".
+#  - Put ! in front of a phrase to EXCLUDE it from that rule.
+#      Example: "!peanut butter" stops the Dairy rule from
+#      freaking out over peanut butter.
+#  - Start a line with ? to make it a MAYBE rule. Maybes show up
+#    as "check with the company" instead of a hard NO.
+#
+# ============================================================
+
+
+# ---------- THE HARD NOs ----------
+
+Gluten: wheat, whole wheat, wheat flour, wheat starch, enriched flour, all purpose flour, bleached flour, unbleached flour, bread flour, durum, semolina, spelt, kamut, farro, einkorn, emmer, triticale, bulgur, couscous, farina, graham, seitan, barley, barley malt, rye, malt, malted, malt extract, malt syrup, malt vinegar, malt flavoring, brewer's yeast, brewers yeast, hydrolyzed wheat protein, wheat germ, wheat bran, soy sauce, teriyaki, panko, breadcrumbs, bread crumbs, !buckwheat, !gluten free, !wheat free, !gluten free soy sauce, !tamari
+
+Dairy: milk, whole milk, skim milk, nonfat milk, milk powder, dry milk, milk solids, milkfat, milk fat, butterfat, butter, buttermilk, cream, sour cream, heavy cream, half and half, cheese, cream cheese, whey, whey protein, casein, caseinate, sodium caseinate, calcium caseinate, lactose, lactalbumin, lactoglobulin, ghee, yogurt, yoghurt, kefir, curds, custard, ricotta, paneer, !coconut milk, !almond milk, !oat milk, !rice milk, !soy milk, !cashew milk, !hemp milk, !coconut cream, !cream of tartar, !cocoa butter, !peanut butter, !almond butter, !cashew butter, !sunflower butter, !sunflower seed butter, !nut butter, !shea butter, !apple butter, !dairy free, !milk free, !non dairy creamer
+
+Corn: corn, cornstarch, corn starch, modified corn starch, corn syrup, corn syrup solids, high fructose corn syrup, hfcs, corn flour, cornmeal, corn meal, corn oil, corn bran, corn gluten, corn masa, masa, masa harina, maize, hominy, polenta, grits, popcorn, cornflakes, tortilla chips, corn tortilla
+
+Onion: onion, onion powder, onion salt, dehydrated onion, dried onion, minced onion, onion flakes, green onion, scallion, shallot, leek, chives
+
+Raisins: raisin, golden raisin, sultana, zante currant
+
+Spinach: spinach
+
+Broccoli: broccoli, broccolini
+
+Asparagus: asparagus
+
+# Black pepper and white pepper are a different plant, so they're NOT
+# on here. This rule is the bell pepper / chili family.
+Peppers: bell pepper, red pepper, green pepper, yellow pepper, orange pepper, sweet pepper, roasted pepper, chili pepper, chile pepper, chili, chile, chilli, chili powder, chile powder, red pepper flakes, crushed red pepper, jalapeno, habanero, serrano, poblano, anaheim, cayenne, paprika, smoked paprika, pimento, pimiento, chipotle, ancho, guajillo, capsicum, sriracha, harissa, gochujang, !black pepper, !white pepper, !product of chile, !made in chile, !grown in chile
+
+# Whole eggs and anything with yolk. Egg WHITES are excluded.
+Egg yolks: egg yolk, yolk, whole egg, egg, dried egg, egg powder, liquid egg, mayonnaise, mayo, egg lecithin, hollandaise, aioli, !egg white, !egg whites, !liquid egg whites, !egg free
+
+
+# ---------- THE MAYBES ----------
+# Vague label terms that sometimes hide the stuff above.
+# Not a hard no. Just a "hmm, check the company's website."
+
+?Could hide onion or peppers: natural flavor, natural flavors, spices, spice, seasoning, seasonings, flavoring
+
+?Could be corn: dextrose, maltodextrin, glucose, glucose syrup, glucose solids, modified food starch, food starch, vegetable starch, caramel color, sorbitol, vegetable oil
+
+?Could be gluten: oats, oat flour, oatmeal, modified food starch, dextrin, !gluten free oats, !certified gluten free oats
